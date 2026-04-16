@@ -1,0 +1,55 @@
+<div
+  id="dustid-widget-root"
+  class="dustid-widget"
+  data-shop="{{ shop.permanent_domain }}"
+  data-cart-token="{{ cart.token }}"
+  data-block-id="{{ block.id }}"
+  data-position="{{ block.settings.position }}"
+>
+  <div class="dustid-banner page-width">
+
+    <!-- Icon -->
+    <div class="dustid-icon">
+      🎁
+    </div>
+
+    <!-- Text -->
+    <div class="dustid-content">
+      <p class="dustid-title">Send as a gift</p>
+      <p class="dustid-subtext">
+        Deliver to any contact — no address needed
+      </p>
+    </div>
+
+    <!-- Actions -->
+    <div class="dustid-actions">
+      <button class="button button--primary" id="d-signin">
+        Connect Dustid →
+      </button>
+    </div>
+
+  </div>
+</div>
+
+{{ 'widget.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'widget.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Dustid Gift Selector",
+  "target": "body",
+  "settings": [
+    {
+      "type": "select",
+      "id": "position",
+      "label": "Widget position",
+      "options": [
+        { "value": "before_header", "label": "Above header" },
+        { "value": "after_header",  "label": "Below header" },
+        { "value": "after_announcement", "label": "Below announcement bar" }
+      ],
+      "default": "after_announcement"
+    }
+  ]
+}
+{% endschema %}
