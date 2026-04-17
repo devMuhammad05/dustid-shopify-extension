@@ -87,6 +87,8 @@ Keep this terminal running at all times while developing.
 
 ## Adding the Widget to Your Store
 
+> **Only do this if the widget is not appearing on your storefront, or if you need to change the widget's position.** If the widget is already visible, you can skip this section.
+
 After the dev server is running:
 
 1. Go to your Shopify Admin → **Online Store** → **Themes** → **Customize**
