@@ -328,6 +328,17 @@
   line-height: 1.5;
 }
 
+.dustid-error {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: #c0392b;
+  line-height: 1.4;
+}
+
+.dustid-error.hidden {
+  display: none;
+}
+
 /* ── 8. Text input ─────────────────────────────────────────────── */
 
 .dustid-field {
@@ -465,10 +476,24 @@
   letter-spacing: 0.04em;
 }
 
+.dustid-contact-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .dustid-contact-name {
   font-size: 0.9rem;
   font-weight: 500;
   color: rgb(var(--color-foreground, 18, 18, 18));
+}
+
+.dustid-contact-meta {
+  font-size: 0.73rem;
+  color: rgba(var(--color-foreground, 18, 18, 18), 0.48);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dustid-contacts-empty {

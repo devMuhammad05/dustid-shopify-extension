@@ -69,6 +69,7 @@
         placeholder="+1 (555) 000-0000"
         autocomplete="tel"
       />
+      <p id="dustid-phone-error" class="dustid-error hidden" aria-live="polite"></p>
       <button class="button button--primary dustid-btn-full" id="dustid-connect">
         Continue
       </button>
@@ -106,6 +107,7 @@
         <input type="text" class="dustid-otp-cell" maxlength="1" inputmode="numeric" pattern="[0-9]" />
         <input type="text" class="dustid-otp-cell" maxlength="1" inputmode="numeric" pattern="[0-9]" />
       </div>
+      <p id="dustid-otp-error" class="dustid-error hidden" aria-live="polite"></p>
       <button class="button button--primary dustid-btn-full" id="dustid-verify">
         Verify
       </button>
@@ -143,6 +145,7 @@
         placeholder="Search contacts…"
         autocomplete="off"
       />
+      <p id="dustid-contacts-error" class="dustid-error hidden" aria-live="polite"></p>
       <ul id="dustid-contact-list" class="dustid-contact-list" role="listbox" aria-label="Contacts"></ul>
       <p id="dustid-contacts-empty" class="dustid-contacts-empty hidden">No contacts found</p>
     </div>

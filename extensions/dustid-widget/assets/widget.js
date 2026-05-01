@@ -18,12 +18,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const contactsEmpty = document.getElementById("dustid-contacts-empty");
   const contactsBackBtn = document.getElementById("dustid-contacts-back");
 
+  const phoneError      = document.getElementById("dustid-phone-error");
+  const otpError        = document.getElementById("dustid-otp-error");
+  const contactsError   = document.getElementById("dustid-contacts-error");
+
   const selectedChip   = document.getElementById("dustid-selected");
   const chipAvatar     = document.getElementById("dustid-chip-avatar");
   const chipName       = document.getElementById("dustid-chip-name");
   const chipChangeBtn  = document.getElementById("dustid-chip-change");
 
   if (!connectBtn || !modal) return;
+
+  function showError(el, msg) {
+    el.textContent = msg;
+    el.classList.remove("hidden");
+  }
+
+  function clearError(el) {
+    el.textContent = "";
+    el.classList.add("hidden");
+  }
 
   // Move overlays to <body> so they escape the section's stacking context.
   // Any ancestor with transform/will-change/filter traps position:fixed children,
@@ -43,18 +57,42 @@ document.addEventListener("DOMContentLoaded", () => {
     phoneInput.value = "";
   });
 
-  submitBtn.addEventListener("click", () => {
+  submitBtn.addEventListener("click", async () => {
     const phone = phoneInput.value.trim();
     if (!phone) {
       phoneInput.focus();
       return;
     }
-    localStorage.setItem("dustid_phone", phone);
-    modal.classList.add("hidden");
-    otpPhoneLabel.textContent = phone;
-    otpCells.forEach((c) => (c.value = ""));
-    otpModal.classList.remove("hidden");
-    otpCells[0].focus();
+
+    clearError(phoneError);
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Sending…";
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber: phone }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        showError(phoneError, data.message || "Failed to send OTP. Please try again.");
+        return;
+      }
+
+      localStorage.setItem("dustid_phone", phone);
+      modal.classList.add("hidden");
+      otpPhoneLabel.textContent = phone;
+      otpCells.forEach((c) => (c.value = ""));
+      otpModal.classList.remove("hidden");
+      otpCells[0].focus();
+    } catch {
+      showError(phoneError, "Network error. Please check your connection.");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Send code";
+    }
   });
 
   phoneInput.addEventListener("keydown", (e) => {
@@ -91,44 +129,100 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   otpBackBtn.addEventListener("click", () => {
+    clearError(otpError);
     otpModal.classList.add("hidden");
     modal.classList.remove("hidden");
     phoneInput.focus();
   });
 
-  resendBtn.addEventListener("click", () => {
-    // TODO: call resend OTP API
-    otpCells.forEach((c) => (c.value = ""));
-    otpCells[0].focus();
-    resendBtn.textContent = "Code resent";
-    setTimeout(() => (resendBtn.textContent = "Resend code"), 3000);
+  resendBtn.addEventListener("click", async () => {
+    const phone = localStorage.getItem("dustid_phone");
+    if (!phone) return;
+
+    clearError(otpError);
+    resendBtn.disabled = true;
+    resendBtn.textContent = "Resending…";
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber: phone }),
+      });
+
+      if (res.ok) {
+        otpCells.forEach((c) => (c.value = ""));
+        otpCells[0].focus();
+        resendBtn.textContent = "Code resent";
+        setTimeout(() => {
+          resendBtn.textContent = "Resend code";
+          resendBtn.disabled = false;
+        }, 3000);
+      } else {
+        showError(otpError, "Failed to resend OTP. Please try again.");
+        resendBtn.disabled = false;
+        resendBtn.textContent = "Resend code";
+      }
+    } catch {
+      showError(otpError, "Network error. Please check your connection.");
+      resendBtn.disabled = false;
+      resendBtn.textContent = "Resend code";
+    }
   });
 
   // ── Step 3: contact selection ────────────────────────────────────
-  verifyBtn.addEventListener("click", () => {
+  verifyBtn.addEventListener("click", async () => {
     const otp = otpCells.map((c) => c.value).join("");
     if (otp.length < otpCells.length) {
       otpCells.find((c) => !c.value)?.focus();
       return;
     }
-    // TODO: call verify API with otp + localStorage.getItem("dustid_phone")
-    otpModal.classList.add("hidden");
-    loadContacts();
-    contactsModal.classList.remove("hidden");
-    contactSearch.value = "";
-    contactSearch.focus();
+
+    const phone = localStorage.getItem("dustid_phone");
+    clearError(otpError);
+    verifyBtn.disabled = true;
+    verifyBtn.textContent = "Verifying…";
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/validate-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber: phone, otp }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        otpCells.forEach((c) => (c.value = ""));
+        otpCells[0].focus();
+        showError(otpError, data.message || "Invalid code. Please try again.");
+        return;
+      }
+
+      if (data.token) {
+        sessionStorage.setItem("dustid_token", data.token);
+      }
+
+      otpModal.classList.add("hidden");
+      loadContacts();
+      contactsModal.classList.remove("hidden");
+      contactSearch.value = "";
+      contactSearch.focus();
+    } catch {
+      showError(otpError, "Network error. Please check your connection.");
+    } finally {
+      verifyBtn.disabled = false;
+      verifyBtn.textContent = "Verify";
+    }
   });
 
   // ── Contacts ─────────────────────────────────────────────────────
 
-  // TODO: replace with fetch("/api/dustid/contacts") after real auth
-  const MOCK_CONTACTS = [
-    { id: "c1", name: "Alice Johnson",  initials: "AJ" },
-    { id: "c2", name: "Bob Martinez",   initials: "BM" },
-    { id: "c3", name: "Clara Osei",     initials: "CO" },
-    { id: "c4", name: "David Kim",      initials: "DK" },
-    { id: "c5", name: "Ella Nguyen",    initials: "EN" },
-  ];
+  let cachedContacts = [];
+
+  function initials(name) {
+    return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  }
 
   function renderContacts(contacts) {
     contactList.innerHTML = "";
@@ -151,14 +245,38 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function loadContacts() {
-    renderContacts(MOCK_CONTACTS);
+  async function loadContacts() {
+    const token = sessionStorage.getItem("dustid_token");
+    clearError(contactsError);
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/friends", {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        showError(contactsError, data.message || "Failed to load contacts.");
+        renderContacts([]);
+        return;
+      }
+
+      cachedContacts = (data.friends || []).map((f) => ({
+        ...f,
+        initials: initials(f.name),
+      }));
+      renderContacts(cachedContacts);
+    } catch {
+      showError(contactsError, "Network error. Could not load contacts.");
+      renderContacts([]);
+    }
   }
 
   contactSearch.addEventListener("input", () => {
     const q = contactSearch.value.trim().toLowerCase();
     renderContacts(
-      q ? MOCK_CONTACTS.filter((c) => c.name.toLowerCase().includes(q)) : MOCK_CONTACTS
+      q ? cachedContacts.filter((c) => c.name.toLowerCase().includes(q)) : cachedContacts
     );
   });
 
