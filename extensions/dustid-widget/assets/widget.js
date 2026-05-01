@@ -46,6 +46,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (el) document.body.appendChild(el);
   });
 
+  // ── Restore session on page load ─────────────────────────────────
+  (function restoreSession() {
+    const token   = localStorage.getItem("dustid_token");
+    const saved   = localStorage.getItem("dustid_selected_contact");
+    if (!token || !saved) return;
+    try {
+      const contact = JSON.parse(saved);
+      chipAvatar.textContent = contact.initials;
+      chipName.textContent   = contact.name;
+      connectBtn.classList.add("hidden");
+      selectedChip.classList.remove("hidden");
+    } catch {
+      localStorage.removeItem("dustid_selected_contact");
+    }
+  })();
+
   // ── Step 1: phone ────────────────────────────────────────────────
   connectBtn.addEventListener("click", () => {
     modal.classList.remove("hidden");
@@ -200,7 +216,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (data.token) {
-        sessionStorage.setItem("dustid_token", data.token);
+        localStorage.setItem("dustid_token", data.token);
       }
 
       otpModal.classList.add("hidden");
@@ -245,8 +261,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function clearAuth() {
+    localStorage.removeItem("dustid_token");
+    localStorage.removeItem("dustid_selected_contact");
+    selectedChip.classList.add("hidden");
+    connectBtn.classList.remove("hidden");
+  }
+
   async function loadContacts() {
-    const token = sessionStorage.getItem("dustid_token");
+    const token = localStorage.getItem("dustid_token");
     clearError(contactsError);
 
     try {
@@ -255,6 +278,14 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const data = await res.json().catch(() => ({}));
+
+      if (res.status === 401) {
+        clearAuth();
+        contactsModal.classList.add("hidden");
+        modal.classList.remove("hidden");
+        phoneInput.focus();
+        return;
+      }
 
       if (!res.ok) {
         showError(contactsError, data.message || "Failed to load contacts.");

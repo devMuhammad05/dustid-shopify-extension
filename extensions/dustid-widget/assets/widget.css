@@ -16,7 +16,9 @@
 /* ── 1. Banner ─────────────────────────────────────────────────── */
 
 .dustid-banner {
-  margin: 1.5rem auto;
+  margin: 1.5rem 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dustid-banner__inner {
@@ -25,6 +27,8 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1.1rem 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
   background: rgb(var(--color-background, 255, 255, 255));
   border: 1px solid var(--dustid-purple-soft);
   border-radius: 1rem;
