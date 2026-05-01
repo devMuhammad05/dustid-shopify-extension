@@ -20,6 +20,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!connectBtn || !modal) return;
 
+  // Move overlays to <body> so they escape the section's stacking context.
+  // Any ancestor with transform/will-change/filter traps position:fixed children,
+  // causing theme product sections to paint on top regardless of z-index.
+  [modal, otpModal, contactsModal].forEach((el) => {
+    if (el) document.body.appendChild(el);
+  });
+
   // ── Step 1: phone ────────────────────────────────────────────────
   connectBtn.addEventListener("click", () => {
     modal.classList.remove("hidden");

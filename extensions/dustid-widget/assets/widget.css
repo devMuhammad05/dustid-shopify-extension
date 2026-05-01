@@ -96,19 +96,18 @@
 .dustid-overlay {
   position: fixed;
   inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(237, 233, 254, 0.75) 0%,
-    rgba(245, 243, 255, 0.65) 100%
-  );
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
+  z-index: 2147483647;
   padding: 1rem;
   font-family: var(--font-body-family, sans-serif);
+  pointer-events: none;
+}
+
+.dustid-overlay .dustid-panel {
+  pointer-events: all;
 }
 
 .dustid-overlay.hidden {
@@ -118,10 +117,8 @@
 /* ── 3. Panel (modal card) ─────────────────────────────────────── */
 
 .dustid-panel {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: #ffffff;
+  border: 1px solid rgba(124, 58, 237, 0.12);
   border-radius: 1.25rem;
   width: 100%;
   max-width: 400px;
