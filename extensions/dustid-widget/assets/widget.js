@@ -1,115 +1,146 @@
-(function () {
-  const root = document.getElementById('dustid-widget-root');
-  if (!root) return;
+document.addEventListener("DOMContentLoaded", () => {
+  const connectBtn = document.getElementById("d-signin");
+  const modal = document.getElementById("dustid-modal");
+  const cancelBtn = document.getElementById("dustid-cancel");
+  const submitBtn = document.getElementById("dustid-connect");
+  const phoneInput = document.getElementById("dustid-phone");
 
-  if (!document.getElementById('dustid-fonts')) {
-    const pc1 = document.createElement('link');
-    pc1.rel = 'preconnect'; pc1.href = 'https://fonts.googleapis.com';
-    const pc2 = document.createElement('link');
-    pc2.rel = 'preconnect'; pc2.href = 'https://fonts.gstatic.com'; pc2.crossOrigin = '';
-    const font = document.createElement('link');
-    font.id = 'dustid-fonts'; font.rel = 'stylesheet';
-    font.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Lato:wght@400;700&display=swap';
-    document.head.append(pc1, pc2, font);
-  }
+  const otpModal = document.getElementById("dustid-otp-modal");
+  const otpPhoneLabel = document.getElementById("dustid-otp-phone");
+  const otpInputs = Array.from(document.querySelectorAll(".dustid-otp-input"));
+  const verifyBtn = document.getElementById("dustid-verify");
+  const otpBackBtn = document.getElementById("dustid-otp-back");
 
-  // Move the root element to the correct position in the page
-  (function positionWidget() {
-    const position = root.dataset.position || 'after_announcement';
-    const header = document.querySelector(
-      'header, #shopify-section-header, .section-header, [data-section-type="header"]'
-    );
-    const announcement = document.querySelector(
-      '#shopify-section-announcement-bar, .announcement-bar, [data-section-type="announcement-bar"]'
-    );
+  const contactsModal = document.getElementById("dustid-contacts-modal");
+  const contactList = document.getElementById("dustid-contact-list");
+  const contactSearch = document.getElementById("dustid-contact-search");
+  const contactsEmpty = document.getElementById("dustid-contacts-empty");
+  const contactsBackBtn = document.getElementById("dustid-contacts-back");
 
-    if (position === 'before_header') {
-      const anchor = header || document.body.firstElementChild;
-      anchor.parentNode.insertBefore(root, anchor);
-    } else if (position === 'after_announcement') {
-      const anchor = announcement || header;
-      if (anchor) anchor.insertAdjacentElement('afterend', root);
-      else document.body.insertAdjacentElement('afterbegin', root);
-    } else {
-      // after_header
-      if (header) header.insertAdjacentElement('afterend', root);
-      else document.body.insertAdjacentElement('afterbegin', root);
+  if (!connectBtn || !modal) return;
+
+  // ── Step 1: Open phone modal ──────────────────────────────────────────────
+  connectBtn.addEventListener("click", () => {
+    modal.classList.remove("hidden");
+  });
+
+  cancelBtn.addEventListener("click", () => {
+    modal.classList.add("hidden");
+    phoneInput.value = "";
+  });
+
+  // ── Step 2: Phone → OTP ───────────────────────────────────────────────────
+  submitBtn.addEventListener("click", () => {
+    const phone = phoneInput.value.trim();
+    if (!phone) {
+      alert("Please enter a phone number");
+      return;
     }
-  })();
+    localStorage.setItem("dustid_phone", phone);
+    modal.classList.add("hidden");
+    otpPhoneLabel.textContent = phone;
+    otpInputs.forEach((inp) => (inp.value = ""));
+    otpModal.classList.remove("hidden");
+    otpInputs[0].focus();
+  });
 
-  const DUMMY_CONTACTS = [
-    { id: '1', name: 'Amara Okafor' },
-    { id: '2', name: 'James Whitfield' },
-    { id: '3', name: 'Sofia Mendes' },
-    { id: '4', name: 'Kwame Asante' },
-    { id: '5', name: 'Priya Nair' },
+  // OTP input navigation
+  otpInputs.forEach((inp, i) => {
+    inp.addEventListener("input", () => {
+      inp.value = inp.value.replace(/\D/g, "").slice(-1);
+      if (inp.value && i < otpInputs.length - 1) otpInputs[i + 1].focus();
+    });
+
+    inp.addEventListener("keydown", (e) => {
+      if (e.key === "Backspace" && !inp.value && i > 0) otpInputs[i - 1].focus();
+    });
+
+    inp.addEventListener("paste", (e) => {
+      e.preventDefault();
+      const pasted = (e.clipboardData || window.clipboardData)
+        .getData("text")
+        .replace(/\D/g, "")
+        .slice(0, otpInputs.length);
+      pasted.split("").forEach((char, idx) => {
+        if (otpInputs[idx]) otpInputs[idx].value = char;
+      });
+      const nextEmpty = otpInputs.find((inp) => !inp.value);
+      (nextEmpty || otpInputs[otpInputs.length - 1]).focus();
+    });
+  });
+
+  otpBackBtn.addEventListener("click", () => {
+    otpModal.classList.add("hidden");
+    modal.classList.remove("hidden");
+  });
+
+  // ── Step 3: OTP → Contact selection ──────────────────────────────────────
+  verifyBtn.addEventListener("click", () => {
+    const otp = otpInputs.map((inp) => inp.value).join("");
+    if (otp.length < otpInputs.length) {
+      alert("Please enter the full OTP code");
+      return;
+    }
+
+    // TODO: replace with real OTP verification API call
+    otpModal.classList.add("hidden");
+    loadContacts();
+    contactsModal.classList.remove("hidden");
+    contactSearch.value = "";
+    contactSearch.focus();
+  });
+
+  // ── Contact list ──────────────────────────────────────────────────────────
+
+  // TODO: replace with fetch("/api/dustid/contacts") after real auth
+  const MOCK_CONTACTS = [
+    { id: "c1", name: "Alice Johnson", initials: "AJ" },
+    { id: "c2", name: "Bob Martinez", initials: "BM" },
+    { id: "c3", name: "Clara Osei", initials: "CO" },
+    { id: "c4", name: "David Kim", initials: "DK" },
+    { id: "c5", name: "Ella Nguyen", initials: "EN" },
   ];
 
-  const DUMMY_SESSION = { userId: 'usr_demo123', token: 'demo_token', name: 'Muhammad' };
-
-  const session = JSON.parse(localStorage.getItem('dustid_session') || 'null');
-  session ? renderSelector(session) : renderSignIn();
-
-  function renderSignIn() {
-    root.innerHTML = `
-      <div id="dustid-banner">
-        <div class="d-icon">🎁</div>
-        <div class="d-text">
-          <div class="d-title">Send as a Gift</div>
-          <div class="d-sub">No address needed — deliver to a saved Dustid contact</div>
-        </div>
-        <div class="d-actions">
-          <button class="d-btn" id="d-signin">Connect to Dustid →</button>
-        </div>
-      </div>
-    `;
-    document.getElementById('d-signin').addEventListener('click', function () {
-      localStorage.setItem('dustid_session', JSON.stringify(DUMMY_SESSION));
-      renderSelector(DUMMY_SESSION);
+  function renderContacts(contacts) {
+    contactList.innerHTML = "";
+    if (!contacts.length) {
+      contactsEmpty.classList.remove("hidden");
+      return;
+    }
+    contactsEmpty.classList.add("hidden");
+    contacts.forEach((contact) => {
+      const li = document.createElement("li");
+      li.className = "dustid-contact-item";
+      li.dataset.id = contact.id;
+      li.innerHTML = `
+        <span class="dustid-contact-avatar">${contact.initials}</span>
+        <span class="dustid-contact-name">${contact.name}</span>
+      `;
+      li.addEventListener("click", () => selectContact(contact));
+      contactList.appendChild(li);
     });
   }
 
-  function renderSelector(session) {
-    const saved = JSON.parse(sessionStorage.getItem('dustid_contact') || 'null');
-
-    root.innerHTML = `
-      <div id="dustid-banner" ${saved ? 'class="confirmed"' : ''}>
-        <div class="d-icon">🎁</div>
-        <div class="d-text">
-          <div class="d-title">Send as a Gift</div>
-          <div class="d-sub">Hi ${session.name} — choose who to send to</div>
-        </div>
-        <div class="d-actions">
-          ${saved ? `
-            <div class="d-pill">
-              <span class="d-pill-dot"></span>
-              Sending to ${saved.name}
-            </div>
-          ` : ''}
-          <div class="d-select-wrap">
-            <select class="d-select" id="d-select">
-              <option value="">${saved ? 'Change contact' : 'Select contact...'}</option>
-              ${DUMMY_CONTACTS.map(c => `
-                <option value="${c.id}" ${saved?.id === c.id ? 'selected' : ''}>${c.name}</option>
-              `).join('')}
-            </select>
-          </div>
-          <button class="d-ghost" id="d-signout">Sign out</button>
-        </div>
-      </div>
-    `;
-
-    document.getElementById('d-select').addEventListener('change', function () {
-      const contact = DUMMY_CONTACTS.find(c => c.id === this.value);
-      if (!contact) return;
-      sessionStorage.setItem('dustid_contact', JSON.stringify({ id: contact.id, name: contact.name }));
-      renderSelector(session);
-    });
-
-    document.getElementById('d-signout').addEventListener('click', function () {
-      localStorage.removeItem('dustid_session');
-      sessionStorage.removeItem('dustid_contact');
-      renderSignIn();
-    });
+  function loadContacts() {
+    renderContacts(MOCK_CONTACTS);
   }
-})();
+
+  contactSearch.addEventListener("input", () => {
+    const q = contactSearch.value.trim().toLowerCase();
+    const filtered = MOCK_CONTACTS.filter((c) => c.name.toLowerCase().includes(q));
+    renderContacts(filtered);
+  });
+
+  function selectContact(contact) {
+    localStorage.setItem("dustid_selected_contact", JSON.stringify(contact));
+    contactsModal.classList.add("hidden");
+    connectBtn.textContent = `Sending to ${contact.name.split(" ")[0]} ✓`;
+  }
+
+  contactsBackBtn.addEventListener("click", () => {
+    contactsModal.classList.add("hidden");
+    otpInputs.forEach((inp) => (inp.value = ""));
+    otpModal.classList.remove("hidden");
+    otpInputs[0].focus();
+  });
+});

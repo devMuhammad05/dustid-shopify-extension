@@ -1,33 +1,89 @@
-<div
-  id="dustid-widget-root"
-  class="dustid-widget"
-  data-shop="{{ shop.permanent_domain }}"
-  data-cart-token="{{ cart.token }}"
-  data-block-id="{{ block.id }}"
-  data-position="{{ block.settings.position }}"
->
-  <div class="dustid-banner page-width">
+<div class="dustid-banner page-width">
+  <div class="dustid-icon">🎁</div>
 
-    <!-- Icon -->
-    <div class="dustid-icon">
-      🎁
+  <div class="dustid-content">
+    <p class="dustid-title">Dustid</p>
+    <p class="dustid-subtext">
+      Deliver to any contact — no address needed
+    </p>
+  </div>
+
+  <div class="dustid-actions">
+    <button class="button button--primary" id="d-signin">
+      Connect Dustid →
+    </button>
+  </div>
+</div>
+
+
+<div id="dustid-modal" class="dustid-modal hidden">
+  <div class="dustid-modal-content">
+    <h3>Connect to Dustid</h3>
+
+    <input
+      type="tel"
+      id="dustid-phone"
+      placeholder="Enter phone number"
+      class="dustid-input"
+    />
+
+    <button class="button button--primary" id="dustid-connect">
+      Continue
+    </button>
+
+    <button class="dustid-cancel" id="dustid-cancel">
+      Cancel
+    </button>
+  </div>
+</div>
+
+<div id="dustid-otp-modal" class="dustid-modal hidden">
+  <div class="dustid-modal-content">
+    <h3>Enter OTP</h3>
+    <p class="dustid-otp-hint">We sent a code to <span id="dustid-otp-phone"></span></p>
+
+    <div class="dustid-otp-fields">
+      <input type="text" class="dustid-otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+      <input type="text" class="dustid-otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+      <input type="text" class="dustid-otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+      <input type="text" class="dustid-otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+      <input type="text" class="dustid-otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" />
+      <input type="text" class="dustid-otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" />
     </div>
 
-    <!-- Text -->
-    <div class="dustid-content">
-      <p class="dustid-title">Send as a gift</p>
-      <p class="dustid-subtext">
-        Deliver to any contact — no address needed
-      </p>
-    </div>
+    <button class="button button--primary" id="dustid-verify">
+      Verify
+    </button>
 
-    <!-- Actions -->
-    <div class="dustid-actions">
-      <button class="button button--primary" id="d-signin">
-        Connect Dustid →
-      </button>
-    </div>
+    <button class="dustid-cancel" id="dustid-otp-back">
+      Back
+    </button>
+  </div>
+</div>
 
+<div id="dustid-contacts-modal" class="dustid-modal hidden">
+  <div class="dustid-modal-content dustid-contacts-content">
+    <h3>Who are you sending to?</h3>
+    <p class="dustid-otp-hint">Select a contact who has shared their address with you</p>
+
+    <input
+      type="text"
+      id="dustid-contact-search"
+      class="dustid-input"
+      placeholder="Search contacts..."
+    />
+
+    <ul id="dustid-contact-list" class="dustid-contact-list">
+      <!-- populated by JS -->
+    </ul>
+
+    <p id="dustid-contacts-empty" class="dustid-contacts-empty hidden">
+      No contacts found
+    </p>
+
+    <button class="dustid-cancel" id="dustid-contacts-back">
+      Back
+    </button>
   </div>
 </div>
 
@@ -36,20 +92,8 @@
 
 {% schema %}
 {
-  "name": "Dustid Gift Selector",
-  "target": "body",
-  "settings": [
-    {
-      "type": "select",
-      "id": "position",
-      "label": "Widget position",
-      "options": [
-        { "value": "before_header", "label": "Above header" },
-        { "value": "after_header",  "label": "Below header" },
-        { "value": "after_announcement", "label": "Below announcement bar" }
-      ],
-      "default": "after_announcement"
-    }
-  ]
+  "name": "Dustid Gift Widget",
+  "target": "section",
+  "settings": []
 }
 {% endschema %}

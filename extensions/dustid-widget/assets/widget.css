@@ -1,233 +1,124 @@
-#dustid-widget-root {
-  display: block;
-  width: 100%;
-  max-width: none;
-  padding: 0;
-  margin: 0;
-}
-
-#dustid-banner, #dustid-banner * {
-  box-sizing: border-box !important;
-  margin: 0;
-  padding: 0;
-}
-
-#dustid-banner {
-  width: 100% !important;
-  background: linear-gradient(to right, #fdf8f1, #faf5ec, #fdf8f1);
-  border-top: 1px solid #e6d5b8;
-  border-bottom: 1px solid #e6d5b8;
-  padding: 12px 24px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  position: relative;
-  overflow: hidden;
-  animation: dustid-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes dustid-in {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Left accent bar */
-#dustid-banner::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  background: linear-gradient(to bottom, #c9a84c, #e8c96a, #c9a84c);
-  border-radius: 0 2px 2px 0;
-}
-
-#dustid-banner.confirmed {
-  background: linear-gradient(to right, #f2fbf6, #edfaf3, #f2fbf6);
-  border-color: #b2e0c8;
-}
-
-#dustid-banner.confirmed::before {
-  background: linear-gradient(to bottom, #22c55e, #4ade80, #22c55e);
-}
-
-/* Icon */
-.d-icon {
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-  background: linear-gradient(135deg, #c9a84c 0%, #e8c96a 100%);
-  border-radius: 9px;
+/* modal overlay */
+.dustid-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 10px rgba(201, 168, 76, 0.35);
+  z-index: 9999;
 }
 
-/* Text block */
-.d-text {
-  flex: 1;
-  min-width: 0;
-  line-height: 1;
+.dustid-modal.hidden {
+  display: none;
 }
 
-.d-title {
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a0f00;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.d-sub {
-  font-family: 'Lato', -apple-system, sans-serif;
-  font-size: 11px;
-  font-weight: 400;
-  color: #9a7a4a;
-  margin-top: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Right actions */
-.d-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-/* CTA button */
-.d-btn {
-  font-family: 'Lato', -apple-system, sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: none;
-  color: #fdf8f1;
-  background: linear-gradient(135deg, #1a0f00 0%, #3d2600 100%);
-  border: none;
-  padding: 0 20px;
-  height: 34px;
-  border-radius: 17px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 2px 10px rgba(26, 15, 0, 0.25);
-}
-
-.d-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 5px 16px rgba(26, 15, 0, 0.35);
-}
-
-.d-btn:active { transform: translateY(0); }
-
-/* Select wrapper for custom arrow */
-.d-select-wrap {
-  position: relative;
-}
-
-.d-select-wrap::after {
-  content: '';
-  position: absolute;
-  right: 13px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid #9a7a4a;
-}
-
-.d-select {
-  font-family: 'Lato', -apple-system, sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  color: #1a0f00;
+/* modal box */
+.dustid-modal-content {
   background: #fff;
-  border: 1.5px solid #dcc98a;
-  padding: 0 34px 0 14px;
-  height: 34px;
-  border-radius: 17px;
-  max-width: 185px;
+  padding: 20px;
+  border-radius: 12px;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dustid-input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.dustid-cancel {
+  background: transparent;
+  border: none;
+  color: #666;
   cursor: pointer;
+}
+
+/* OTP & contacts popup shared */
+.dustid-contacts-content {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.dustid-otp-hint {
+  font-size: 13px;
+  color: #555;
+  margin: 0;
+}
+
+.dustid-otp-fields {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.dustid-otp-input {
+  width: 40px;
+  height: 48px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  border: 2px solid #ddd;
+  border-radius: 8px;
   outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  transition: border-color 0.15s;
 }
 
-.d-select:focus {
-  border-color: #c9a84c;
-  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.18);
+.dustid-otp-input:focus {
+  border-color: #000;
 }
 
-/* Confirmed pill */
-.d-pill {
+/* Contact list */
+.dustid-contact-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.dustid-contact-item {
   display: flex;
   align-items: center;
-  gap: 7px;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 17px;
-  background: #dcfce7;
-  border: 1px solid #86efac;
-  font-family: 'Lato', -apple-system, sans-serif;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.dustid-contact-item:hover {
+  background: #f4f4f4;
+}
+
+.dustid-contact-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #000;
+  color: #fff;
   font-size: 12px;
   font-weight: 700;
-  color: #14532d;
-  white-space: nowrap;
-  animation: dustid-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
-@keyframes dustid-pop {
-  from { transform: scale(0.75); opacity: 0; }
-  to   { transform: scale(1);    opacity: 1; }
-}
-
-.d-pill-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #22c55e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-/* Sign out */
-.d-ghost {
-  font-family: 'Lato', -apple-system, sans-serif;
-  font-size: 11px;
-  font-weight: 400;
-  color: #b89a6a;
-  background: none;
-  border: none;
-  cursor: pointer;
-  white-space: nowrap;
-  padding: 0;
-  text-decoration: underline;
-  text-decoration-style: dotted;
-  text-underline-offset: 2px;
-  transition: color 0.2s;
+.dustid-contact-name {
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.d-ghost:hover { color: #1a0f00; }
-
-/* Responsive */
-@media (max-width: 600px) {
-  #dustid-banner { padding: 10px 16px; gap: 10px; }
-  .d-sub { display: none; }
-  .d-select { max-width: 130px; }
-  .d-btn { padding: 0 14px; }
-  .d-icon { width: 32px; height: 32px; border-radius: 7px; }
-}
-
-@media (max-width: 400px) {
-  .d-title { font-size: 14px; }
-  .d-pill { padding: 0 10px; font-size: 11px; }
-  .d-actions { gap: 7px; }
+.dustid-contacts-empty {
+  font-size: 13px;
+  color: #999;
+  text-align: center;
+  margin: 8px 0;
 }
