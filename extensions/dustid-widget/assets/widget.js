@@ -18,14 +18,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const contactsEmpty = document.getElementById("dustid-contacts-empty");
   const contactsBackBtn = document.getElementById("dustid-contacts-back");
 
-  const phoneError      = document.getElementById("dustid-phone-error");
-  const otpError        = document.getElementById("dustid-otp-error");
-  const contactsError   = document.getElementById("dustid-contacts-error");
+  const phoneError = document.getElementById("dustid-phone-error");
+  const otpError = document.getElementById("dustid-otp-error");
+  const contactsError = document.getElementById("dustid-contacts-error");
 
-  const selectedChip   = document.getElementById("dustid-selected");
-  const chipAvatar     = document.getElementById("dustid-chip-avatar");
-  const chipName       = document.getElementById("dustid-chip-name");
-  const chipChangeBtn  = document.getElementById("dustid-chip-change");
+  const selectedChip = document.getElementById("dustid-selected");
+  const chipAvatar = document.getElementById("dustid-chip-avatar");
+  const chipName = document.getElementById("dustid-chip-name");
+  const chipChangeBtn = document.getElementById("dustid-chip-change");
 
   if (!connectBtn || !modal) return;
 
@@ -48,13 +48,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ── Restore session on page load ─────────────────────────────────
   (function restoreSession() {
-    const token   = localStorage.getItem("dustid_token");
-    const saved   = localStorage.getItem("dustid_selected_contact");
+    const token = localStorage.getItem("dustid_token");
+    const saved = localStorage.getItem("dustid_selected_contact");
     if (!token || !saved) return;
+
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        clearAuth();
+        return;
+      }
+    } catch {
+      clearAuth();
+      return;
+    }
+
     try {
       const contact = JSON.parse(saved);
       chipAvatar.textContent = contact.initials;
-      chipName.textContent   = contact.name;
+      chipName.textContent = contact.name;
       connectBtn.classList.add("hidden");
       selectedChip.classList.remove("hidden");
     } catch {
@@ -93,7 +105,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        showError(phoneError, data.message || "Failed to send OTP. Please try again.");
+        showError(
+          phoneError,
+          data.message || "Failed to send OTP. Please try again.",
+        );
         return;
       }
 
@@ -220,7 +235,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       otpModal.classList.add("hidden");
-      loadContacts();
+      const loaded = await loadContacts();
+      if (!loaded) return;
       contactsModal.classList.remove("hidden");
       contactSearch.value = "";
       contactSearch.focus();
@@ -237,7 +253,12 @@ document.addEventListener("DOMContentLoaded", () => {
   let cachedContacts = [];
 
   function initials(name) {
-    return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+    return name
+      .split(" ")
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
   }
 
   function renderContacts(contacts) {
@@ -274,23 +295,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const res = await fetch("http://127.0.0.1:5000/friends", {
-        headers: { "Authorization": `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await res.json().catch(() => ({}));
 
-      if (res.status === 401) {
+      if (res.status === 401 || res.status === 403) {
         clearAuth();
-        contactsModal.classList.add("hidden");
         modal.classList.remove("hidden");
         phoneInput.focus();
-        return;
+        showError(
+          phoneError,
+          res.status === 403
+            ? "Access denied. Please sign in again."
+            : "Session expired. Please sign in again.",
+        );
+        return false;
       }
 
       if (!res.ok) {
-        showError(contactsError, data.message || "Failed to load contacts.");
-        renderContacts([]);
-        return;
+        const friendlyMessage =
+          typeof data.message === "string" &&
+          !data.message.toLowerCase().includes("schema") &&
+          !data.message.toLowerCase().includes("openapi") &&
+          !data.message.toLowerCase().includes("spec")
+            ? data.message
+            : "Failed to load contacts. Please try again.";
+        showError(phoneError, friendlyMessage);
+        return false;
       }
 
       cachedContacts = (data.friends || []).map((f) => ({
@@ -298,16 +330,19 @@ document.addEventListener("DOMContentLoaded", () => {
         initials: initials(f.name),
       }));
       renderContacts(cachedContacts);
+      return true;
     } catch {
-      showError(contactsError, "Network error. Could not load contacts.");
-      renderContacts([]);
+      showError(phoneError, "Network error. Could not load contacts.");
+      return false;
     }
   }
 
   contactSearch.addEventListener("input", () => {
     const q = contactSearch.value.trim().toLowerCase();
     renderContacts(
-      q ? cachedContacts.filter((c) => c.name.toLowerCase().includes(q)) : cachedContacts
+      q
+        ? cachedContacts.filter((c) => c.name.toLowerCase().includes(q))
+        : cachedContacts,
     );
   });
 
@@ -316,13 +351,16 @@ document.addEventListener("DOMContentLoaded", () => {
     contactsModal.classList.add("hidden");
 
     chipAvatar.textContent = contact.initials;
-    chipName.textContent   = contact.name;
+    chipName.textContent = contact.name;
     connectBtn.classList.add("hidden");
     selectedChip.classList.remove("hidden");
+
+    console.log("📍 Selected contact address:", contact.address ?? contact);
   }
 
-  chipChangeBtn.addEventListener("click", () => {
-    loadContacts();
+  chipChangeBtn.addEventListener("click", async () => {
+    const loaded = await loadContacts();
+    if (!loaded) return;
     contactsModal.classList.remove("hidden");
     contactSearch.value = "";
     contactSearch.focus();
@@ -333,5 +371,35 @@ document.addEventListener("DOMContentLoaded", () => {
     otpCells.forEach((c) => (c.value = ""));
     otpModal.classList.remove("hidden");
     otpCells[0].focus();
+  });
+
+  let skipCheckoutIntercept = false;
+
+  document.addEventListener("click", (e) => {
+    const checkoutBtn = e.target.closest("button#checkout");
+    if (!checkoutBtn) return;
+
+    if (skipCheckoutIntercept) {
+      skipCheckoutIntercept = false;
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const contact = localStorage.getItem("dustid_selected_contact");
+
+    fetch("http://127.0.0.1:5000/pre-fill-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contact: contact ? JSON.parse(contact) : null }),
+    })
+      .then((res) => res.json())
+      .then((data) => console.log("✅ Response:", data))
+      .catch((err) => console.error("❌ Error:", err))
+      .finally(() => {
+        skipCheckoutIntercept = true;
+        checkoutBtn.click();
+      });
   });
 });
